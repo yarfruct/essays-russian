@@ -1,4 +1,13 @@
-def parse_essays_info(rows):
+import os
+import csv
+
+import pandas as pd
+
+
+def load_foreign_essays():
+    with open(os.path.join("..", "essays-foreign.csv")) as f:
+        reader = csv.DictReader(f)
+        rows = [row for row in reader]
     result = []
     current_essay = None
     for row in rows:
@@ -45,4 +54,21 @@ def parse_essays_info(rows):
         current_essay["lexic"] += int(row["лексика и стилистика"]) if row["лексика и стилистика"] else 0
         current_essay["syntax"] += int(row["синтаксис"]) if row["синтаксис"] else 0
         current_essay["text"].append(row["абзацы эссе"].strip())
-    return result
+    return pd.DataFrame.from_records(result, index="ix")
+
+
+def load_native_essays():
+    df = pd.read_csv(os.path.join("..", "essays-native.csv"), index_col="id эссе")
+    df = df.rename(columns={
+        "тема": "topic",
+        "текст": "text",
+        "сложность текста": "complexity",
+        "соответствие теме": "theme_matching",
+        "связность текста": "coherence",
+        "уместность тональности": "sentiment_reasoned",
+        "оценка": "total",
+        "грамотность": "spelling",
+    })
+    df.index.names = ["ix"]
+    df["n_chars"] = df.text.map(lambda x: len(x.strip()))
+    return df
